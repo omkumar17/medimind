@@ -31,6 +31,9 @@ export default function PatientDashboard() {
         <Link href="/patient/prescriptions">
           <button className="btn">View Prescriptions</button>
         </Link>
+        <Link href="/patient/share-records">
+          <button className="btn">Share Records with Doctor</button>
+        </Link>
         <Link href="/upload-record">
           <button className="btn">Upload Medical Document</button>
         </Link>

@@ -1,37 +1,80 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { verifyJwt, AUTH_COOKIE_NAME } from "../../../lib/jwt";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default async function PatientHistory() {
-  const authToken = cookies().get(AUTH_COOKIE_NAME)?.value;
+export default function PatientHistory() {
+  const router = useRouter();
+  const [allRecords, setAllRecords] = useState([]);
+  const [doctorEmail, setDoctorEmail] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  if (!authToken) {
-    redirect("/login");
+  useEffect(() => {
+    async function load() {
+      const meRes = await fetch("/api/auth/me");
+      const meData = await meRes.json();
+
+      if (!meData.user || meData.user.role !== "doctor") {
+        router.push("/login");
+        return;
+      }
+
+      setDoctorEmail(meData.user.email);
+
+      const response = await fetch("/api/records");
+      const records = await response.json();
+      setAllRecords(records || []);
+      setLoading(false);
+    }
+    load();
+  }, [router]);
+
+  if (loading) {
+    return <div className="page"><p>Loading...</p></div>;
   }
 
-  let user;
-  try {
-    user = verifyJwt(authToken);
-  } catch {
-    redirect("/login");
-  }
+  return <PatientHistoryClient allRecords={allRecords} doctorEmail={doctorEmail} />;
+}
 
-  if (user.role !== "doctor") {
-    redirect("/dashboard");
-  }
+function PatientHistoryClient({ allRecords, doctorEmail }) {
+  const [searchEmail, setSearchEmail] = useState("");
+  const [filteredRecords, setFilteredRecords] = useState([]);
 
-  const response = await fetch("http://localhost:3000/api/records", { cache: "no-store" });
-  const records = await response.json();
+  const handleSearch = () => {
+    if (!searchEmail.trim()) {
+      setFilteredRecords([]);
+      return;
+    }
+
+    const sharedRecords = allRecords.filter(record =>
+      record.patientId === searchEmail &&
+      record.sharedWith &&
+      record.sharedWith.includes(doctorEmail)
+    );
+    setFilteredRecords(sharedRecords);
+  };
 
   return (
     <div className="page">
-      <h2>All Patient Medical History</h2>
-      {records.length === 0 ? (
-        <p>No records found.</p>
+      <h2>Patient Medical Records</h2>
+
+      <div style={{ marginBottom: '1rem' }}>
+        <input
+          type="email"
+          placeholder="Enter patient email"
+          value={searchEmail}
+          onChange={(e) => setSearchEmail(e.target.value)}
+          style={{ marginRight: '0.5rem' }}
+        />
+        <button onClick={handleSearch} className="btn">Search Shared Records</button>
+      </div>
+
+      {filteredRecords.length === 0 ? (
+        <p>Enter patient email to view shared records.</p>
       ) : (
         <div className="grid">
-          {records.map((record) => (
+          {filteredRecords.map((record) => (
             <div key={record._id || record.id} style={{ padding: '1rem', borderRadius: '1rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <Link href={`/record/${record._id || record.id}`}>
                 <h3 style={{ cursor: 'pointer', color: '#2563eb' }}>{record.title}</h3>

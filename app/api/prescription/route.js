@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyJwt, AUTH_COOKIE_NAME } from "../../../lib/jwt";
 import connectToDatabase from "../../../lib/mongodb";
 import Prescription from "../../../models/Prescription";
+import Record from "../../../models/Record";
 import User from "../../../models/User";
 
 export async function POST(request) {
@@ -28,18 +29,20 @@ export async function POST(request) {
     patientId: body.patientId,
     symptoms: body.symptoms,
     diagnosis: body.diagnosis,
-    medicines: [
-      {
-        name: body.medicine,
-        dosage: body.dosage,
-        duration: body.duration,
-      },
-    ],
+    medicines: body.medicines,
     advice: body.advice,
     doctorId: currentUser.email,
+    sharedWith: [currentUser.email], // Doctor automatically has access to their own prescriptions
   });
 
   await newPrescription.save();
+  console.log('Prescription created:', { id: newPrescription._id, doctorId: newPrescription.doctorId, sharedWith: newPrescription.sharedWith });
+
+  // Add doctor to sharedWith for all patient's records
+  await Record.updateMany(
+    { patientId: body.patientId },
+    { $addToSet: { sharedWith: currentUser.email } }
+  );
 
   return NextResponse.json({ message: "saved", prescription: newPrescription });
 }

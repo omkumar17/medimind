@@ -44,13 +44,13 @@ export async function POST(request) {
     });
     await newUser.save();
 
-    const authToken = signJwt({ email: payload.email, role }, { expiresIn: "7d" });
+    const authToken = signJwt({ email: payload.email, role }, { expiresIn: "30d" });
     const response = NextResponse.json({ message: "OTP verified successfully", role });
 
     response.cookies.set(AUTH_COOKIE_NAME, authToken, {
       httpOnly: true,
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 30 * 24 * 60 * 60, // 30 days
       sameSite: "lax",
     });
     response.cookies.delete(TEMP_REGISTER_COOKIE_NAME, { path: "/" });

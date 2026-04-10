@@ -26,7 +26,7 @@ export default function DoctorDashboard() {
       <h1>Doctor Dashboard</h1>
       <div className="grid">
         <Link href="/doctor/prescription">
-          <button className="btn">Create Prescription</button>
+          <button className="btn">View Patient Records</button>
         </Link>
         <Link href="/doctor/patient-history">
           <button className="btn">View Medical Records</button>

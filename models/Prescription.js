@@ -13,6 +13,7 @@ const PrescriptionSchema = new mongoose.Schema({
   ],
   advice: { type: String },
   doctorId: { type: String, required: true },
+  sharedWith: [{ type: String }], // Array of doctor emails
   date: { type: Date, default: Date.now },
 });
 

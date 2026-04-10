@@ -21,7 +21,7 @@ export async function POST(request) {
 
   const inferredRole = getRoleFromEmail(email);
   const role = requestedRole || inferredRole;
-  const authToken = signJwt({ email, role }, { expiresIn: "7d" });
+  const authToken = signJwt({ email, role }, { expiresIn: "30d" });
   const response = NextResponse.json({
     message: `Login successful for ${email}`,
     role,
@@ -30,7 +30,7 @@ export async function POST(request) {
   response.cookies.set(AUTH_COOKIE_NAME, authToken, {
     httpOnly: true,
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 30 * 24 * 60 * 60,
     sameSite: "lax",
   });
 
