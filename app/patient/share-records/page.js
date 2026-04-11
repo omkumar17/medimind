@@ -3,152 +3,687 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ShareRecords() {
-  const router = useRouter();
-  const [hospital, setHospital] = useState("");
-  const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState("");
-  const [records, setRecords] = useState([]);
-  const [prescriptions, setPrescriptions] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+export default function ShareRecords(){
 
-  useEffect(() => {
-    // Load patient's records
-    async function loadRecords() {
-      const meRes = await fetch("/api/auth/me");
-      const meData = await meRes.json();
-      if (!meData.user || meData.user.role !== "patient") {
-        router.push("/login");
-        return;
-      }
+const router =
+useRouter();
 
-      const recordsRes = await fetch(`/api/records?patientId=${encodeURIComponent(meData.user.email)}`);
-      const recordsData = await recordsRes.json();
-      setRecords(recordsData || []);
+const [hospital,setHospital] =
+useState("");
 
-      const prescriptionsRes = await fetch(`/api/prescription?patientId=${encodeURIComponent(meData.user.email)}`);
-      const prescriptionsData = await prescriptionsRes.json();
-      setPrescriptions(prescriptionsData || []);
-    }
-    loadRecords();
-  }, [router]);
+const [doctors,setDoctors] =
+useState([]);
 
-  const handleHospitalSearch = async () => {
-    if (!hospital.trim()) return;
-    const res = await fetch(`/api/doctors?hospital=${encodeURIComponent(hospital)}`);
-    const data = await res.json();
-    setDoctors(data || []);
-  };
+const [selectedDoctor,setSelectedDoctor] =
+useState("");
 
-  const handleShare = async () => {
-    if (!selectedDoctor || selectedItems.length === 0) return;
-    setLoading(true);
+const [records,setRecords] =
+useState([]);
 
-    const recordsToShare = selectedItems
-      .filter(key => key.startsWith('record-'))
-      .map(key => key.replace('record-', ''));
+const [prescriptions,setPrescriptions] =
+useState([]);
 
-    const prescriptionsToShare = selectedItems
-      .filter(key => key.startsWith('prescription-'))
-      .map(key => key.replace('prescription-', ''));
+const [selectedItems,setSelectedItems] =
+useState([]);
 
-    const res = await fetch("/api/share-records", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        doctorEmail: selectedDoctor,
-        recordIds: recordsToShare,
-        prescriptionIds: prescriptionsToShare,
-      }),
-    });
+const [loading,setLoading] =
+useState(false);
 
-    if (res.ok) {
-      alert("Items shared successfully!");
-      router.push("/patient/dashboard");
-    } else {
-      alert("Failed to share items");
-    }
-    setLoading(false);
-  };
 
-  const toggleItem = (type, id) => {
-    const itemKey = `${type}-${id}`;
-    setSelectedItems(prev =>
-      prev.includes(itemKey)
-        ? prev.filter(key => key !== itemKey)
-        : [...prev, itemKey]
-    );
-  };
 
-  return (
-    <div className="page">
-      <h2>Share Medical Records</h2>
+/* LOAD USER DATA */
 
-      <div style={{ marginBottom: '1rem' }}>
-        <input
-          type="text"
-          placeholder="Enter hospital name"
-          value={hospital}
-          onChange={(e) => setHospital(e.target.value)}
-          style={{ marginRight: '0.5rem' }}
-        />
-        <button onClick={handleHospitalSearch} className="btn">Search Doctors</button>
-      </div>
+useEffect(()=>{
 
-      {doctors.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <h3>Select Doctor:</h3>
-          <select value={selectedDoctor} onChange={(e) => setSelectedDoctor(e.target.value)}>
-            <option value="">Choose a doctor</option>
-            {doctors.map((doc) => (
-              <option key={doc.email} value={doc.email}>{doc.email}</option>
-            ))}
-          </select>
-        </div>
-      )}
+async function loadData(){
 
-      {records.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <h3>Select Medical Records to Share:</h3>
-          {records.map((record) => (
-            <div key={record._id}>
-              <input
-                type="checkbox"
-                id={`record-${record._id}`}
-                checked={selectedItems.includes(`record-${record._id}`)}
-                onChange={() => toggleItem('record', record._id)}
-              />
-              <label htmlFor={`record-${record._id}`}>{record.title} - {record.type}</label>
-            </div>
-          ))}
-        </div>
-      )}
+const meRes =
+await fetch("/api/auth/me");
 
-      {prescriptions.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <h3>Select Prescriptions to Share:</h3>
-          {prescriptions.map((p) => (
-            <div key={p._id}>
-              <input
-                type="checkbox"
-                id={`prescription-${p._id}`}
-                checked={selectedItems.includes(`prescription-${p._id}`)}
-                onChange={() => toggleItem('prescription', p._id)}
-              />
-              <label htmlFor={`prescription-${p._id}`}>Prescription by Dr. {p.doctorId} - {new Date(p.date).toLocaleDateString()}</label>
-            </div>
-          ))}
-        </div>
-      )}
+const meData =
+await meRes.json();
 
-      <button
-        onClick={handleShare}
-        disabled={!selectedDoctor || selectedItems.length === 0 || loading}
-        className="btn"
-      >
-        {loading ? "Sharing..." : "Share Selected Items"}
-      </button>
-    </div>
-  );
+
+if(!meData.user ||
+meData.user.role !== "patient"){
+
+router.push("/login");
+
+return;
+
+}
+
+
+const recordsRes =
+await fetch(
+
+`/api/records?patientId=${encodeURIComponent(
+
+meData.user.regno
+
+)}`
+
+);
+
+const recordsData =
+await recordsRes.json();
+
+
+setRecords(recordsData || []);
+
+
+
+const prescriptionRes =
+await fetch(
+
+`/api/prescription?patientId=${encodeURIComponent(
+
+meData.user.regno
+
+)}`
+
+);
+
+const prescriptionData =
+await prescriptionRes.json();
+
+
+setPrescriptions(
+
+prescriptionData || []
+
+);
+
+}
+
+
+loadData();
+
+},[router]);
+
+
+
+/* SEARCH DOCTOR */
+
+async function handleHospitalSearch(){
+
+if(!hospital.trim())
+return;
+
+
+const res =
+await fetch(
+
+`/api/doctors?hospital=${encodeURIComponent(
+
+hospital
+
+)}`
+
+);
+
+const data =
+await res.json();
+
+
+setDoctors(data || []);
+
+}
+
+
+
+/* SELECT ITEMS */
+
+function toggleItem(type,id){
+
+const key =
+`${type}-${id}`;
+
+
+setSelectedItems(prev=>
+
+prev.includes(key)
+
+? prev.filter(i=>i!==key)
+
+: [...prev,key]
+
+);
+
+}
+
+
+
+/* SHARE */
+
+async function handleShare(){
+
+if(!selectedDoctor ||
+selectedItems.length===0)
+return;
+
+
+setLoading(true);
+
+
+const recordIds =
+selectedItems
+
+.filter(i=>
+i.startsWith("record-"))
+
+.map(i=>
+i.replace("record-",""));
+
+
+const prescriptionIds =
+selectedItems
+
+.filter(i=>
+i.startsWith("prescription-"))
+
+.map(i=>
+i.replace("prescription-",""));
+
+
+const res =
+await fetch(
+
+"/api/share-records",
+
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:
+JSON.stringify({
+
+doctorRegno:
+selectedDoctor,
+
+recordIds,
+
+prescriptionIds
+
+})
+
+}
+
+);
+
+
+setLoading(false);
+
+
+if(res.ok){
+
+alert(
+"Shared successfully"
+);
+
+router.push(
+"/patient/dashboard"
+);
+
+}else{
+
+alert(
+"Failed to share"
+);
+
+}
+
+}
+
+
+
+/* UI */
+
+return(
+
+<div style={{
+
+maxWidth:"1000px",
+
+margin:"30px auto",
+
+padding:"20px",
+
+display:"flex",
+
+flexDirection:"column",
+
+gap:"20px"
+
+}}>
+
+
+{/* HEADER */}
+
+<div style={{
+
+background:"#f4f8ff",
+
+padding:"20px",
+
+borderRadius:"12px",
+
+border:"1px solid #e3edff",
+
+textAlign:"center"
+
+}}>
+
+<h2 style={{
+
+margin:"0 0 6px 0",
+
+color:"#1565c0"
+
+}}>
+
+Share Medical Records
+
+</h2>
+
+
+<p style={{
+
+margin:0,
+
+color:"#555"
+
+}}>
+
+Select records to share with doctor
+
+</p>
+
+</div>
+
+
+
+{/* SEARCH */}
+
+<div style={{
+
+display:"flex",
+
+flexWrap:"wrap",
+
+gap:"10px",
+
+background:"#fff",
+
+padding:"15px",
+
+borderRadius:"10px",
+
+border:"1px solid #eee"
+
+}}>
+
+<input
+
+placeholder="Enter hospital name"
+
+value={hospital}
+
+onChange={
+
+e=>setHospital(
+e.target.value
+)
+
+}
+
+style={{
+
+flex:"1",
+
+minWidth:"200px",
+
+padding:"8px"
+
+}}
+
+/>
+
+
+<button
+onClick={
+handleHospitalSearch
+}
+className="btn"
+>
+
+Search Doctors
+
+</button>
+
+</div>
+
+
+
+{/* DOCTORS */}
+
+{doctors.length>0 && (
+
+<div style={{
+
+background:"#fff",
+
+padding:"15px",
+
+borderRadius:"10px",
+
+border:"1px solid #eee"
+
+}}>
+
+<h3>
+
+Select Doctor
+
+</h3>
+
+
+<select
+
+value={
+selectedDoctor
+}
+
+onChange={
+
+e=>
+
+setSelectedDoctor(
+e.target.value
+)
+
+}
+
+style={{
+
+width:"100%",
+
+padding:"8px"
+
+}}
+
+>
+
+<option value="">
+
+Choose doctor
+
+</option>
+
+
+{doctors.map(doc=>(
+
+<option
+
+key={
+doc.regno
+}
+
+value={
+doc.regno
+}
+
+>
+
+{doc.name}
+
+</option>
+
+))}
+
+
+</select>
+
+</div>
+
+)}
+
+
+
+{/* RECORDS */}
+
+{records.length>0 && (
+
+<div style={{
+
+background:"#fff",
+
+padding:"18px",
+
+borderRadius:"12px",
+
+border:"1px solid #eee"
+
+}}>
+
+<h3>
+
+Medical Records
+
+</h3>
+
+
+{records.map(r=>(
+
+<label
+key={r._id}
+
+style={{
+
+display:"flex",
+
+alignItems:"center",
+
+gap:"10px",
+
+padding:"8px",
+
+borderBottom:
+"1px solid #f1f1f1"
+
+}}
+
+>
+
+<input
+
+type="checkbox"
+
+checked={
+
+selectedItems.includes(
+
+`record-${r._id}`
+
+)
+
+}
+
+onChange={()=>
+
+toggleItem(
+
+"record",
+
+r._id
+
+)
+
+}
+
+/>
+
+
+<span>
+
+{r.title}
+
+</span>
+
+
+</label>
+
+))}
+
+
+</div>
+
+)}
+
+
+
+{/* PRESCRIPTIONS */}
+
+{prescriptions.length>0 && (
+
+<div style={{
+
+background:"#fff",
+
+padding:"18px",
+
+borderRadius:"12px",
+
+border:"1px solid #eee"
+
+}}>
+
+<h3>
+
+Prescriptions
+
+</h3>
+
+
+{prescriptions.map(p=>(
+
+<label
+key={p._id}
+
+style={{
+
+display:"flex",
+
+alignItems:"center",
+
+gap:"10px",
+
+padding:"8px",
+
+borderBottom:
+"1px solid #f1f1f1"
+
+}}
+
+>
+
+<input
+
+type="checkbox"
+
+checked={
+
+selectedItems.includes(
+
+`prescription-${p._id}`
+
+)
+
+}
+
+onChange={()=>
+
+toggleItem(
+
+"prescription",
+
+p._id
+
+)
+
+}
+
+/>
+
+
+<span>
+
+Dr. {p.doctorId}
+
+</span>
+
+
+</label>
+
+))}
+
+
+</div>
+
+)}
+
+
+
+{/* BUTTON */}
+
+<button
+
+onClick={
+handleShare
+}
+
+disabled={
+
+!selectedDoctor ||
+
+selectedItems.length===0 ||
+
+loading
+
+}
+
+className="btn"
+
+style={{
+
+alignSelf:"center",
+
+minWidth:"200px"
+
+}}
+
+>
+
+{
+
+loading
+
+? "Sharing..."
+
+: "Share Selected Items"
+
+}
+
+</button>
+
+
+
+</div>
+
+);
+
 }

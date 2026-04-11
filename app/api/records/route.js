@@ -9,7 +9,7 @@ export async function POST(request) {
   let title = "";
   let type = "";
   let notes = "";
-  let patientId = "";
+  let patientRegno = "";
   let fileName = null;
   let fileType = null;
   let fileData = null;
@@ -19,7 +19,7 @@ export async function POST(request) {
     title = formData.get("title")?.toString() || "";
     type = formData.get("type")?.toString() || "";
     notes = formData.get("notes")?.toString() || "";
-    patientId = formData.get("patientId")?.toString() || "";
+    patientRegno = formData.get("patientRegno")?.toString() || "";
     const file = formData.get("file");
 
     if (file && file instanceof File && file.size > 0) {
@@ -33,14 +33,14 @@ export async function POST(request) {
     title = body.title;
     type = body.type;
     notes = body.notes;
-    patientId = body.patientId || "";
+    patientRegno = body.patientRegno || "";
   }
 
   const newRecord = new Record({
     title,
     type,
     notes,
-    patientId,
+    patientRegno,
     fileName,
     fileType,
     fileData,
@@ -66,9 +66,9 @@ export async function GET(request) {
     return NextResponse.json(recordObj);
   }
 
-  const patientId = searchParams.get("patientId");
-  if (patientId) {
-    const records = await Record.find({ patientId });
+  const patientRegno = searchParams.get("patientRegno");
+  if (patientRegno) {
+    const records = await Record.find({ patientRegno });
     const recordsWithUrl = records.map(r => {
       const obj = r.toObject();
       return obj;

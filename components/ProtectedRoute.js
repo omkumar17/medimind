@@ -1,18 +1,42 @@
 "use client";
 
-export default function ProtectedRoute({ children }) {
-  const user = null;
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function ProtectedRoute({ children, allowedRole }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (!data.user) {
+          router.push('/');
+          return;
+        }
+        if (allowedRole && data.user.role !== allowedRole) {
+          router.push('/');
+          return;
+        }
+        setUser(data.user);
+      } catch {
+        router.push('/');
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkAuth();
+  }, [router, allowedRole]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!user) {
-    return (
-      <div className="page">
-        <h2>Protected content</h2>
-        <p>Please login to access this page.</p>
-        <a href="/login">
-          <button className="btn">Go to Login</button>
-        </a>
-      </div>
-    );
+    return null; // redirect handled
   }
 
   return <>{children}</>;

@@ -21,23 +21,43 @@ export default function Medicines() {
 
   return (
     <div className="page">
-      <h2>Medicine Alternatives</h2>
-
-      <input
-        placeholder="Enter medicine name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-
-      <button className="btn" onClick={searchMedicine}>
-        Search
-      </button>
-
-      <ul>
-        {result.map((med, index) => (
-          <li key={index}>{med}</li>
-        ))}
-      </ul>
+      <div className="hero-section">
+        <div className="hero-content">
+          <h1 style={{ fontSize: '2.2rem', marginBottom: '1rem' }}>Medicine Alternatives</h1>
+          </div>
+      </div>
+      
+      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ background: 'white', padding: '2rem', borderRadius: '1rem', boxShadow: '0 12px 30px rgba(21,101,192,0.12)', marginBottom: '2rem' }}>
+          <h2 style={{ color: '#1565c0', marginBottom: '1.5rem', textAlign: 'center' }}>Search Medicine</h2>
+          
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <input
+              className="note"
+              style={{ flex: 1, minWidth: '250px' }}
+              placeholder="Enter medicine name (e.g., Paracetamol)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <button className="btn" onClick={searchMedicine} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+              🔍 Search
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {result.length > 0 && (
+        <>
+          <h2 style={{ color: '#1565c0', fontSize: '1.5rem', margin: '2rem 0 1.5rem', textAlign: 'center' }}>
+            Alternatives Found ({result.length})
+          </h2>
+          <div className="grid">
+            {result.map((med, index) => (
+              <MedicineCard key={index} name={med} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

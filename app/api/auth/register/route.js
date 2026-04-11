@@ -6,7 +6,8 @@ import Otp from "../../../../models/Otp";
 export async function POST(request) {
   await connectToDatabase();
 
-  const { email } = await request.json();
+  const body = await request.json();
+  const { email, ...profile } = body;
 
   // Generate a random 6-digit OTP
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -19,7 +20,7 @@ export async function POST(request) {
   });
   await newOtp.save();
 
-  const tempToken = signJwt({ email, action: "register" }, { expiresIn: "30m" });
+  const tempToken = signJwt({ email, profile, action: "register" }, { expiresIn: "30m" });
 
   const response = NextResponse.json({
     message: `OTP sent to ${email}`,

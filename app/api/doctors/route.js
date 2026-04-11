@@ -6,16 +6,23 @@ export async function GET(request) {
   await connectToDatabase();
 
   const { searchParams } = new URL(request.url);
-  const hospital = searchParams.get("hospital");
+  const name = searchParams.get("name") || "";
+  const specialization = searchParams.get("specialization") || "";
+  const hospital = searchParams.get("hospital") || "";
 
-  if (!hospital) {
-    return NextResponse.json([]);
+  const query = { role: "doctor" };
+
+  if (name) {
+    query.name = { $regex: name, $options: "i" };
+  }
+  if (specialization) {
+    query.specialization = { $regex: specialization, $options: "i" };
+  }
+  if (hospital) {
+    query.hospital = { $regex: hospital, $options: "i" };
   }
 
-  const doctors = await User.find({
-    role: "doctor",
-    hospital: { $regex: hospital, $options: "i" } // Case insensitive search
-  });
+  const doctors = await User.find(query).select('regno name specialization hospital phone address profileImage experience consultationFee');
 
-  return NextResponse.json(doctors.map(doc => ({ email: doc.email, hospital: doc.hospital })));
+  return NextResponse.json(doctors);
 }

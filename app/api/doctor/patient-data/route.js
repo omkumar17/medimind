@@ -12,49 +12,50 @@ export async function GET(request) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  let doctorEmail;
+  let doctorRegno;
   try {
     const payload = verifyJwt(token);
     if (payload.role !== "doctor") {
       return NextResponse.json({ message: "Access denied" }, { status: 403 });
     }
-    doctorEmail = payload.email;
+    doctorRegno = payload.regno;
   } catch (error) {
     return NextResponse.json({ message: "Invalid token" }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
-  const patientEmail = searchParams.get("email");
+  const patientRegno = searchParams.get("regno");
 
-  if (!patientEmail) {
-    return NextResponse.json({ message: "Patient email required" }, { status: 400 });
+  if (!patientRegno) {
+    return NextResponse.json({ message: "Patient regno required" }, { status: 400 });
   }
 
   // Get records shared with this doctor
   const sharedRecords = await Record.find({
-    patientId: patientEmail,
-    sharedWith: doctorEmail
+    patientRegno,
+    sharedWithRegnos: doctorRegno
   });
 
   // Get prescriptions by this doctor for this patient OR prescriptions shared with this doctor
   const prescriptions = await Prescription.find({
-    patientId: patientEmail,
+    patientRegno,
     $or: [
-      { doctorId: doctorEmail },
-      { sharedWith: doctorEmail }
+      { doctorRegno: doctorRegno },
+      { sharedWithRegnos: doctorRegno }
     ]
   });
 
   console.log('Doctor patient data:', {
-    doctorEmail,
-    patientEmail,
+    doctorRegno,
+    patientRegno,
     sharedRecordsCount: sharedRecords.length,
     prescriptionsCount: prescriptions.length,
-    prescriptions: prescriptions.map(p => ({ id: p._id, doctorId: p.doctorId, sharedWith: p.sharedWith }))
+    prescriptions: prescriptions.map(p => ({ id: p._id, doctorRegno: p.doctorRegno, sharedWithRegnos: p.sharedWithRegnos }))
   });
 
   return NextResponse.json({
-    patientEmail,
+    patientRegno,
+    doctorRegno,
     records: sharedRecords.map(r => r.toObject()),
     prescriptions: prescriptions.map(p => p.toObject())
   });

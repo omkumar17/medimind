@@ -15,11 +15,11 @@ export async function GET() {
 
   try {
     const payload = verifyJwt(token);
-    const user = await User.findOne({ email: payload.email });
+const user = await User.findOne({ regno: payload.regno });
     if (!user) {
       return NextResponse.json({ user: null });
     }
-    return NextResponse.json({ user: { email: user.email, role: user.role } });
+    return NextResponse.json({ user });
   } catch {
     return NextResponse.json({ user: null });
   }

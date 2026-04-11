@@ -4,8 +4,8 @@ const RecordSchema = new mongoose.Schema({
   title: { type: String, required: true },
   type: { type: String, required: true },
   notes: { type: String },
-  patientId: { type: String, required: true },
-  sharedWith: [{ type: String }], // Array of doctor emails
+  patientRegno: { type: String, required: true },
+  sharedWithRegnos: [{ type: String }], // Array of doctor regnos
   date: { type: Date, default: Date.now },
   fileName: { type: String },
   fileType: { type: String },

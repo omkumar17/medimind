@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { verifyJwt, signJwt, TEMP_REGISTER_COOKIE_NAME, AUTH_COOKIE_NAME } from "../../../../lib/jwt";
-import { getRoleFromEmail } from "../../../../lib/auth";
 import connectToDatabase from "../../../../lib/mongodb";
 import User from "../../../../models/User";
 import Otp from "../../../../models/Otp";
@@ -29,7 +28,63 @@ export async function POST(request) {
     // Delete the used OTP
     await Otp.deleteOne({ _id: storedOtp._id });
 
-    const role = getRoleFromEmail(payload.email);
+    if (!payload.profile) {
+      return NextResponse.json({ message: "Profile data missing. Please register again." }, { status: 400 });
+    }
+    const profile = payload.profile;
+    const role = profile.role;
+
+    const year =
+      new Date()
+        .getFullYear()
+        .toString()
+        .slice(-2);
+
+    const prefix =
+      role === 'patient'
+        ? 'PAT'
+        : role === 'doctor'
+          ? 'DOC'
+          : 'ADM';
+
+    const regPrefix =
+      `${prefix}${year}`;
+
+
+    // find last user with same prefix
+
+    const lastUser =
+      await User.findOne({
+
+        regno:
+          new RegExp(`^${regPrefix}`)
+
+      })
+
+        .sort({ regno: -1 });
+
+
+    let nextNumber = 1;
+
+
+    if (lastUser?.regno) {
+
+      const lastSeq =
+        parseInt(
+          lastUser.regno.slice(-4)
+        );
+
+      nextNumber =
+        lastSeq + 1;
+
+    }
+
+
+    const regno =
+      `${regPrefix}${nextNumber
+        .toString()
+        .padStart(4, "0")
+      }`;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: payload.email });
@@ -39,13 +94,14 @@ export async function POST(request) {
 
     // Create new user
     const newUser = new User({
+      regno,
       email: payload.email,
-      role,
+      ...profile,
     });
     await newUser.save();
 
-    const authToken = signJwt({ email: payload.email, role }, { expiresIn: "30d" });
-    const response = NextResponse.json({ message: "OTP verified successfully", role });
+    const authToken = signJwt({ regno, email: payload.email, role }, { expiresIn: "30d" });
+    const response = NextResponse.json({ message: "OTP verified successfully. Welcome, " + profile.name, role });
 
     response.cookies.set(AUTH_COOKIE_NAME, authToken, {
       httpOnly: true,

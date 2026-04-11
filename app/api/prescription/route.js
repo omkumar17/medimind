@@ -6,58 +6,148 @@ import Record from "../../../models/Record";
 import User from "../../../models/User";
 
 export async function POST(request) {
+
   await connectToDatabase();
 
-  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const token =
+    request.cookies.get(AUTH_COOKIE_NAME)?.value;
+
   if (!token) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    return NextResponse.json(
+      { message: "Unauthorized" },
+      { status: 401 }
+    );
+
   }
 
   let currentUser;
+
   try {
-    const payload = verifyJwt(token);
-    currentUser = await User.findOne({ email: payload.email });
+
+    const payload =
+      verifyJwt(token);
+
+    currentUser =
+      await User.findOne({
+        regno: payload.regno
+      });
+
     if (!currentUser) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404 }
+      );
+
     }
+
   } catch (error) {
-    return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+
+    return NextResponse.json(
+      { message: "Invalid token" },
+      { status: 401 }
+    );
+
   }
 
-  const body = await request.json();
-  const newPrescription = new Prescription({
-    patientId: body.patientId,
-    symptoms: body.symptoms,
-    diagnosis: body.diagnosis,
-    medicines: body.medicines,
-    advice: body.advice,
-    doctorId: currentUser.email,
-    sharedWith: [currentUser.email], // Doctor automatically has access to their own prescriptions
-  });
+  const body =
+    await request.json();
+
+
+  const newPrescription =
+    new Prescription({
+
+      patientId:
+        body.patientId,
+
+      symptoms:
+        body.symptoms,
+
+      diagnosis:
+        body.diagnosis,
+
+      medicines:
+        body.medicines,
+
+      advice:
+        body.advice,
+
+      doctorId:
+        currentUser.regno,
+
+      sharedWith:
+        [currentUser.regno]
+
+    });
+
 
   await newPrescription.save();
-  console.log('Prescription created:', { id: newPrescription._id, doctorId: newPrescription.doctorId, sharedWith: newPrescription.sharedWith });
 
-  // Add doctor to sharedWith for all patient's records
+
   await Record.updateMany(
-    { patientId: body.patientId },
-    { $addToSet: { sharedWith: currentUser.email } }
+
+    {
+      patientRegno:
+        body.patientId
+    },
+
+    {
+      $addToSet: {
+
+        sharedWithRegnos:
+          currentUser.regno
+
+      }
+    }
+
   );
 
-  return NextResponse.json({ message: "saved", prescription: newPrescription });
+
+  return NextResponse.json({
+
+    message: "saved",
+
+    prescription:
+      newPrescription
+
+  });
+
 }
 
+
+
 export async function GET(request) {
+
   await connectToDatabase();
 
-  const { searchParams } = new URL(request.url);
-  const patientId = searchParams.get("patientId");
+  const { searchParams } =
+    new URL(request.url);
+
+  const patientId =
+    searchParams.get("patientId");
+
 
   if (patientId) {
-    const prescriptions = await Prescription.find({ patientId });
-    return NextResponse.json(prescriptions);
+
+    const prescriptions =
+      await Prescription.find({
+        patientId
+      });
+
+    return NextResponse.json(
+      prescriptions
+    );
+
   }
 
-  const prescriptions = await Prescription.find({});
-  return NextResponse.json(prescriptions);
+
+  const prescriptions =
+    await Prescription.find({});
+
+
+  return NextResponse.json(
+    prescriptions
+  );
+
 }
